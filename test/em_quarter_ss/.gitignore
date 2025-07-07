@@ -1,0 +1,12 @@
+SBM_input_??
+bulkdens.asc_s_0_03_0_9
+bulkradii.asc_s_0_03_0_9
+capacity.asc
+coeff_?.asc
+constants.asc
+kernels.asc_s_0_03_0_9
+kernels_z.asc
+masses.asc
+namelist.input.*
+scattering_tables_2layer_high_quad_1dT_1%fw_110
+termvels.asc
