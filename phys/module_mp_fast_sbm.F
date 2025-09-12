@@ -89,8 +89,7 @@ INTEGER, PARAMETER, PRIVATE:: R8SIZE = 8
 INTEGER, PARAMETER, PRIVATE:: R4SIZE = 4
 
 ! ... Spontanous Rain BreakUp
-INTEGER,PARAMETER :: 		JBreak_Spontanous = 28, &
-              					I_Break_Method = 1
+INTEGER,PARAMETER :: 		JBreak_Spontanous = 28
 DOUBLE PRECISION,PARAMETER :: COL = 0.23105
 ! ... Snow-BreakUp
 INTEGER,PARAMETER :: KR_SNOW_MAX = 35
@@ -120,7 +119,12 @@ contains
   character*256 :: wrf_err_message
 ! ... Locals
 
-!dtime_spon_break = DTwrf
+  ! TU: namelist variables
+  integer :: sbm_i_break_method
+  call nl_get_sbm_i_break_method(1, sbm_i_break_method)
+  write(wrf_err_message, *) '!I: sbm_i_break_method = ', sbm_i_break_method
+  call wrf_message(trim(wrf_err_message))
+
 DROPRADII_dp = DROPRADII
 XL_dp = XL
 ! diameter in nm
@@ -134,32 +138,25 @@ END DO
 WRITE( wrf_err_message , * ) 'IKR_Spon_Break=',ikr_spon_break
 CALL wrf_message ( TRIM ( wrf_err_message ) )
 
-if (i_break_method==1) then
+if (sbm_i_break_method==1) then
  	DO KR=1,NKR
 		 prob(kr)=2.94d-7*dexp(34.0d0*DROPRADII(kr))
 	ENDDO
-else if  (i_break_method==2) then
+else if  (sbm_i_break_method==2) then
  	DO KR=1,NKR
 		 prob(kr)=0.155d-3*dexp(1.466d0*10.0d0*DROPRADII(kr))
  	ENDDO
 endif
 
-!DO KR=1,NKR
-!  prob(kr)=2.94d-7*dexp(34.0d0*DROPRADII_dp(kr))*dtime_spon_break
-!  IF (prob(kr)>=1.0d0) exit
-!END DO
-
 DO j=ikr_spon_break,nkr
 	DO i=1,j-1
 		gain_var(j,i)=(145.37d0/xl_dp(i))*(dropradii_dp(i)/dropradii_dp(j))*dexp(-7.0d0*dropradii_dp(i)/dropradii_dp(j))
-		!gain_var_new(j,i)=gain_var(j,i)*xl(j)/(gain_var(j,i)*xl(i)**2.0d0)
 		nnd(j,i)=gamma*dexp(-gamma*diameter(i))/(1-dexp(-gamma*diameter(j)))
 	END DO
 END DO
 ! Calculation the ratio that leads to mass conservation
 q_m = 0.0
 DO i=1,ikr_spon_break-1
-  !nnd_m = nnd_m+nnd(ikr_spon_break,i)*m(i);
    q_m = q_m + gain_var(ikr_spon_break,i)*xl_dp(i)**2;
 END DO
 ratio_new = q_m/xl_dp(ikr_spon_break)
@@ -203,6 +200,10 @@ ratio_new = q_m/xl_dp(ikr_spon_break)
   integer :: kr,i,imax,j
   real(kind=r4size) :: start_time, end_time, dtime_spon_break
 ! ... Local
+
+  ! TU: namelist variables
+  integer :: sbm_i_break_method
+  call nl_get_sbm_i_break_method(1, sbm_i_break_method)
 
  dtime_spon_break = DTwrf
 
@@ -254,7 +255,7 @@ ratio_new = q_m/xl_dp(ikr_spon_break)
 
 ! f+g) Redistributing and calculations drops concentration over smaller (i<j) bins
 !
-  select case (i_break_method)
+  select case (sbm_i_break_method)
   case(1)
   do j=ikr_spon_break,imax
        do i=1,j-1
@@ -3026,14 +3027,14 @@ end module module_mp_SBM_Auxiliary
 			                  SUP1, SUP2,      			  		       &
 			                  COL_r, 							               &
 			                  SUP2_OLD_r, DSUPICE_XYZ_r, 		     &
-			                  RCCN_r, DROPRADII_r, NKR, NKR_aerosol, ICEMAX, ICEPROCS, &
+			                  RCCN_r, DROPRADII_r, NKR, NKR_aerosol, ICEMAX, sbm_iceprocs, &
 			                  Win_r, Is_This_CloudBase, RO_SOLUTE, IONS, MWAERO, &
 			                  Iin, Jin, Kin)
 
 
 	implicit none
 
- 	integer,intent(in) :: 	 Kin, Jin, Iin, NKR, NKR_aerosol, ICEMAX, ICEPROCS, Is_This_CloudBase,IONS
+ 	integer,intent(in) :: 	 Kin, Jin, Iin, NKR, NKR_aerosol, ICEMAX, sbm_iceprocs, Is_This_CloudBase,IONS
  	real(kind=r4size),intent(in) :: XL_r(:), XI_r(:,:), ROR_r, PP_r, COL_r, Win_r, &
 							             SUP2_OLD_r, DSUPICE_XYZ_r, RCCN_r(:), DROPRADII_r(:)
   real(kind=r4size),intent(in) ::	 	   MWAERO, RO_SOLUTE
@@ -3844,6 +3845,7 @@ enddo
              						fws_graupel,fws_hail, 		            &
              						usetables,                            &
                          twolayer_hail,twolayer_graupel,twolayer_fd,twolayer_snow,rpquada,usequad
+  use module_configure
 
  PRIVATE
 
@@ -3863,18 +3865,10 @@ enddo
                                 r_p_ff3i06=19,r_p_ff4i01=20,r_p_ff4i06=25,r_p_ff5i01=26,r_p_ff5i06=31,r_p_ff6i01=32,r_p_ff6i06=37,&
                                 r_p_ff7i01=38,r_p_ff7i06=43,r_p_ff8i01=44,r_p_ff8i06=49,r_p_ff9i01=50,r_p_ff9i06=55
 
- INTEGER,PARAMETER :: IBREAKUP = 1
- INTEGER,PARAMETER :: Snow_BreakUp_On = 1
- INTEGER,PARAMETER :: Spont_Rain_BreakUp_On = 1
- LOGICAL,PARAMETER :: CONSERV = .TRUE.
  INTEGER,PARAMETER :: JIWEN_FAN_MELT = 1
- LOGICAL,PARAMETER :: IPolar_HUCM = .TRUE.
- INTEGER,PARAMETER :: hail_opt = 1
- INTEGER,PARAMETER :: ILogNormal_modes_Aerosol = 1
 
  REAL,PARAMETER :: DX_BOUND = 1433
  REAL(kind=r8size), PARAMETER ::  SCAL = 1.d0
- INTEGER,PARAMETER :: ICEPROCS = 1
  INTEGER,PARAMETER :: ICETURB = 0, LIQTURB = 0
 
  INTEGER,PARAMETER :: icempl=1,ICEMAX=3,NCD=33,NHYDR=5,NHYDRO=7    &
@@ -4180,11 +4174,44 @@ enddo
  ! ### (KS) ............................................................................................
  	INTEGER :: NZ,NZZ,II,JJ
 
+  ! TU: namelist variables
+  character(len=80) :: wrf_err_message
+  integer :: sbm_ilognormal_modes_aerosol
+  integer :: sbm_spont_rain_breakup
+  integer :: sbm_iceprocs
+  integer :: sbm_snow_breakup
+  integer :: sbm_hail_opt
+  logical :: sbm_conserv
+  logical :: sbm_ipolar_hucm
+  call nl_get_sbm_ilognormal_modes_aerosol(1, sbm_ilognormal_modes_aerosol)
+  call nl_get_sbm_spont_rain_breakup(1, sbm_spont_rain_breakup)
+  call nl_get_sbm_iceprocs(1, sbm_iceprocs)
+  call nl_get_sbm_snow_breakup(1, sbm_snow_breakup)
+  call nl_get_sbm_hail_opt(1, sbm_hail_opt)
+  call nl_get_sbm_conserv(1, sbm_conserv)
+  call nl_get_sbm_ipolar_hucm(1, sbm_ipolar_hucm)
+  if (itimestep.eq.1) then
+    write(wrf_err_message, *) '!I: sbm_ilognormal_modes_aerosol = ', sbm_ilognormal_modes_aerosol
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_spont_rain_breakup = ', sbm_spont_rain_breakup
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_iceprocs = ', sbm_iceprocs
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_snow_breakup = ', sbm_snow_breakup
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_hail_opt = ', sbm_hail_opt
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_conserv = ', sbm_conserv
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_ipolar_hucm = ', sbm_ipolar_hucm
+    call wrf_message(trim(wrf_err_message))
+  end if
+
   XS_d = XS
 
   if (itimestep.eq.1)then
-    if (iceprocs.eq.1) call wrf_message(" FAST SBM: ICE PROCESES ACTIVE ")
-    if (iceprocs.eq.0) call wrf_message(" FAST SBM: LIQUID PROCESES ONLY")
+    if (sbm_iceprocs.eq.1) call wrf_message(" FAST SBM: ICE PROCESES ACTIVE ")
+    if (sbm_iceprocs.eq.0) call wrf_message(" FAST SBM: LIQUID PROCESES ONLY")
   end if
 
   NCOND = 3
@@ -4197,7 +4224,7 @@ enddo
   DEL_BBN=BB2_MYN-BB1_MYN
   DEL_BBR=BB1_MYN/DEL_BBN
 
- if (conserv)then
+ if (sbm_conserv)then
     DO j = jts,jte
        DO i = its,ite
           DO k = kts,kte
@@ -4222,7 +4249,7 @@ enddo
    					    chem_new(I,K,J,KR) = chem_new(I,K,J,KR)*RHOCGS(I,K,J)/1000.0
    				  END DO
  				!  ... Hail or Graupel [same registry adresses]
-           if(hail_opt == 1) then
+           if(sbm_hail_opt == 1) then
              KRR=0
              DO KR=p_ff6i01,p_ff6i33
                  KRR=KRR+1
@@ -4272,7 +4299,7 @@ enddo
  		  DO i = its,ite
  			DO k = kts,kte
  			   rhoair_max = rhocgs(i,1,j) ! [g/cm3]
- 			   if(ILogNormal_modes_Aerosol == 1)then
+ 			   if(sbm_ilognormal_modes_aerosol == 1)then
  				  IF (zcgs(I,K,J) .LE. ZMIN)THEN
  					  FACTZ = 1.0
  				  ELSE
@@ -4308,7 +4335,7 @@ enddo
 		          rhoair_max = rhocgs(i,1,j) ! [g/cm3]
               if (i <= 5 .or. i >= IDE-5 .OR. &
                   & j <= 5 .or. j >= JDE-5)THEN
-                  if(ILogNormal_modes_Aerosol == 1)then
+                  if(sbm_ilognormal_modes_aerosol == 1)then
                     IF (zcgs(I,K,J).LE.ZMIN) THEN
                        FACTZ = 1.0
                     ELSE
@@ -4355,7 +4382,7 @@ enddo
         END DO
      END DO
 
-     IF(ICEPROCS == 1)THEN
+     IF(sbm_iceprocs == 1)THEN
       KZ_Cloud_Base = 0
       DO j = jts,jte
           DO i = its,ite
@@ -4544,7 +4571,7 @@ enddo
    				END DO
 
           ! ... Hail or Graupel
-          if(hail_opt == 1)then
+          if(sbm_hail_opt == 1)then
            KRR=0
            DO kr=p_ff6i01,p_ff6i33
                KRR=KRR+1
@@ -4645,7 +4672,7 @@ enddo
                                             ,DEL1IN,DEL2IN     			        &
                                             ,COL 								            &
                                             ,SUP2_OLD,DSUPICE_XYZ(I,K,J) 		&
-                                            ,RCCN,DROPRADII,NKR,NKR_aerosol,ICEMAX,ICEPROCS &
+                                            ,RCCN,DROPRADII,NKR,NKR_aerosol,ICEMAX,sbm_iceprocs &
                                             ,W_Stag_My,Is_This_CloudBase,RO_SOLUTE,IONS,MWAERO &
                                             ,I,J,K)
                         
@@ -4685,7 +4712,7 @@ enddo
                       ISYM4=0
                       ISYM5=0
                       IF(FMAX1 > 0)ISYM1 = 1
-                      IF (ICEPROCS == 1)THEN
+                      IF (sbm_iceprocs == 1)THEN
                         IF(FMAX2(1) > 1.E-10)ISYM2(1) = 1
                         IF(FMAX2(2) > 1.E-10)ISYM2(2) = 1
                         IF(FMAX2(3) > 1.E-10)ISYM2(3) = 1
@@ -4777,7 +4804,7 @@ enddo
  ! +-------------------------------- +
  ! Immediate Freezing
  ! +---------------------------------+
- 				IF(T_NEW(i,k,j) < 273.15 .and. ICEPROCS == 1)THEN
+ 				IF(T_NEW(i,k,j) < 273.15 .and. sbm_iceprocs == 1)THEN
  					CALL FREEZ &
  							(FF1R,XL,FF2R,XI,FF3R,XS,FF4R,XG,FF5R,XH, &
  							 T_NEW(I,K,J),DT,rhocgs(I,K,J), 			  &
@@ -4787,7 +4814,7 @@ enddo
 ! --------------------------------------------------------------+
 ! Jiwen Fan Melting (melting along a constant time scale)
 ! --------------------------------------------------------------+
-		    IF (JIWEN_FAN_MELT == 1 .and. T_NEW(i,k,j) > 273.15 .and. ICEPROCS == 1) THEN
+		    IF (JIWEN_FAN_MELT == 1 .and. T_NEW(i,k,j) > 273.15 .and. sbm_iceprocs == 1) THEN
 				   CALL J_W_MELT(FF1R,XL,FF2R,XI,FF3R,XS,FF4R,XG,FF5R,XH, &
 						             T_NEW(I,K,J),DT,rhocgs(I,K,J),COL,ICEMAX,NKR)
         END IF
@@ -4797,7 +4824,7 @@ enddo
             FF3R(KR)=FF3R(KR) + FF2R(KR,ICE)
             FF2R(KR,ICE) = 0.0
           END DO
-          if(hail_opt == 1)then
+          if(sbm_hail_opt == 1)then
             FF5R(KR) = FF5R(KR) + FF4R(KR)
             FF4R(KR) = 0.0
           else
@@ -4809,7 +4836,7 @@ enddo
  ! +---------------------------+
  ! Spontanaous Rain Breakup
 ! +----------------------------+
- 			IF (Spont_Rain_BreakUp_On == 1 .AND. (SUM(FF1R) > 43.0*1.0D-30) )THEN
+ 			IF (sbm_spont_rain_breakup == 1 .AND. (SUM(FF1R) > 43.0*1.0D-30) )THEN
  					FF1R_D(:) = FF1R(:)
  					XL_D(:) = XL(:)
  					CALL Spont_Rain_BreakUp (DT ,FF1R_D, XL_D, Prob, Gain_Var_New, NND, NKR, ikr_spon_break)
@@ -4819,7 +4846,7 @@ enddo
  ! -----------------------------------------------------------+
  ! ... Snow BreakUp
  ! -----------------------------------------------------------+
- 		IF (Snow_BreakUp_On == 1 .and. ICEPROCS == 1 .and. sum(FF3R(KR_SNOW_MIN:NKR))> (NKR-KR_SNOW_MIN)*1.0D-30)THEN
+ 		IF (sbm_snow_breakup == 1 .and. sbm_iceprocs == 1 .and. sum(FF3R(KR_SNOW_MIN:NKR))> (NKR-KR_SNOW_MIN)*1.0D-30)THEN
 
  			DO KR=1,NKR
  				FF3R_D(KR) = FF3R(KR)
@@ -4845,7 +4872,7 @@ enddo
 		  KRR=KRR+1
 		  chem_new(I,K,J,KR)=FCCN(KRR)
 	  END DO
-	  IF (ICEPROCS == 1)THEN
+	  IF (sbm_iceprocs == 1)THEN
 	  ! ... Snow
 		  KRR = 0
 		  DO kr=p_ff5i01,p_ff5i33
@@ -4853,7 +4880,7 @@ enddo
 			  chem_new(I,K,J,KR)=FF3R(KRR)
 		  END DO
      ! ... Hail/ Graupel
-      if(hail_opt == 1)then
+      if(sbm_hail_opt == 1)then
        KRR = 0
        DO KR=p_ff6i01,p_ff6i33
            KRR=KRR+1
@@ -4866,7 +4893,7 @@ enddo
            chem_new(I,K,J,KR) = FF4R(KRR)
        END DO
       endif
-      ! ICEPROCS == 1
+      ! sbm_iceprocs == 1
  		   END IF
 
        END DO
@@ -4898,7 +4925,7 @@ enddo
               chem_new(i,k,j,kr)=ffx_z(k,krr)*rhocgs(i,k,j)
             end do
           end do
-       		if(iceprocs == 1)then
+       		if(sbm_iceprocs == 1)then
  ! ... Snow ...
           do k = kts,kte
             rhocgs_z(k)=rhocgs(i,k,j)
@@ -4924,7 +4951,7 @@ enddo
             rhocgs_z(k)=rhocgs(i,k,j)
             pcgs_z(k)=pcgs(i,k,j)
             zcgs_z(k)=zcgs(i,k,j)
-            if(hail_opt == 1)then
+            if(sbm_hail_opt == 1)then
               vrx(k,:) = vr5_z3D(:,i,k,j)
             else
               vrx(k,:) = vr4_z3D(:,i,k,j)
@@ -4943,7 +4970,7 @@ enddo
               chem_new(i,k,j,kr)=ffx_z(k,krr)*rhocgs(i,k,j)
             end do
           end do
- 			end if ! if (iceprocs == 1)
+ 			end if ! if (sbm_iceprocs == 1)
    	end do
    end do
 
@@ -4989,7 +5016,7 @@ enddo
           END DO
 
  			  KRR=0
- 			  IF (ICEPROCS == 1)THEN
+ 			  IF (sbm_iceprocs == 1)THEN
  			  ! ... Snow output
  			   	KRR=0
  			   	DO  KR=p_ff5i01,p_ff5i33
@@ -5012,7 +5039,7 @@ enddo
           DO  KR=p_ff6i01,p_ff6i33
             KRR=KRR+1
             ! ... Hail or Graupel
-            if(hail_opt == 1)then
+            if(sbm_hail_opt == 1)then
               QG(I,K,J)=QG(I,K,J) &
               +(1.0/RHOCGS(I,K,J))*COL*chem_new(I,K,J,KR)*XH(KRR)*XH(KRR)*3.0
               QNG(I,K,J)=QNG(I,K,J) &
@@ -5024,7 +5051,7 @@ enddo
               +COL*chem_new(I,K,J,KR)*XG(KRR)*3.0/rhocgs(I,K,J)*1000.0 ! #/kg
             endif
           END DO
-   		END IF !IF (ICEPROCS.EQ.1)THEN
+   		END IF !IF (sbm_iceprocs.EQ.1)THEN
 
       KRR = 0
       DO  KR = p_ff8i01,p_ff8i43
@@ -5075,7 +5102,7 @@ enddo
      KRR=0
      DO KR=p_ff6i01,p_ff6i33
        KRR=KRR+1
-       if(hail_opt == 1)then
+       if(sbm_hail_opt == 1)then
          DELTAW = VR5_Z(KRR,1)
          RAINNC(I,J) = RAINNC(I,J) &
          +10.0*(3./RO1BL(KRR))*COL*DT*DELTAW* &
@@ -5109,7 +5136,7 @@ enddo
 ! ... Polarimetric Forward Radar Operator
 ! ..........................................
   if ( PRESENT (diagflag) ) then
-    if( diagflag .and. IPolar_HUCM .and. (sbm_diagnostics==1) ) then
+    if( diagflag .and. sbm_ipolar_hucm .and. (sbm_diagnostics==1) ) then
 
       dx_dbl = dx
       dy_dbl = dy
@@ -5137,7 +5164,7 @@ enddo
           FF1R_D(KRR) = (1./RHOCGS(I,K,J))*chem_new(I,K,J,KR)*XL(KRR)*XL(KRR)*3.0
           if (FF1R_D(KRR) < 1.0D-20) FF1R_D(KRR) = 0.0
         end do
-        if (ICEPROCS == 1)then
+        if (sbm_iceprocs == 1)then
 ! ... SNOW
           KRR=0
           do kr=p_ff5i01,p_ff5i33
@@ -5148,7 +5175,7 @@ enddo
           end do
 ! ... Graupel or Hail
           KRR=0
-          if(hail_opt == 0)then
+          if(sbm_hail_opt == 0)then
             do kr = p_ff6i01,p_ff6i33
               KRR=KRR+1
               FF4R_D(KRR) = (1./RHOCGS(I,K,J))*chem_new(I,K,J,KR)*XG(KRR)*XG(KRR)*3.0
@@ -5165,7 +5192,7 @@ enddo
               FF4R_d(KRR) = 0.0
             end do
           endif
-        ! in caseICEPROCS.EQ.1
+        ! in case sbm_iceprocs.EQ.1
         end if
 
         rhocgs_d = rhocgs(I,K,J)
@@ -5240,7 +5267,7 @@ enddo
 
  		 ! cycle by K
  		 end do
- 		! diagflag .and. IPolar_HUCM
+ 		! diagflag .and. sbm_ipolar_hucm
  		endif
  	! PRESENT(diagflag)
  	endif
@@ -5259,7 +5286,7 @@ enddo
    end do
    end do
 
-   if (conserv)then
+   if (sbm_conserv)then
  		  DO j = jts,jte
  		     DO i = its,ite
  		        DO k = kts,kte
@@ -5283,7 +5310,7 @@ enddo
          		   chem_new(I,K,J,KR)=chem_new(I,K,J,KR)/RHOCGS(I,K,J)*1000.0
          		  END DO
               ! ... Hail / Graupel
-              if(hail_opt == 1)then
+              if(sbm_hail_opt == 1)then
                  KRR=0
                  DO KR=p_ff6i01,p_ff6i33
                      KRR=KRR+1
@@ -5386,6 +5413,10 @@ enddo
 
  	  character(len=256),parameter :: dir_43 = "SBM_input_43", dir_33 = "SBM_input_33"
  	  character(len=256) :: input_dir,Fname
+
+    ! TU: namelist variables
+    integer :: sbm_ilognormal_modes_aerosol
+    call nl_get_sbm_ilognormal_modes_aerosol(1, sbm_ilognormal_modes_aerosol)
 
  	 if(nkr == 33) input_dir = trim(dir_33)
  	 if(nkr == 43) input_dir = trim(dir_43)
@@ -6096,7 +6127,7 @@ enddo
  if (.NOT. ALLOCATED(Scale_CCN_Factor)) ALLOCATE(Scale_CCN_Factor)
  if (.NOT. ALLOCATED(FCCN)) ALLOCATE(FCCN(NKR_aerosol))
 
- 	IF(ILogNormal_modes_Aerosol == 1)THEN
+ 	IF(sbm_ilognormal_modes_aerosol == 1)THEN
  		! ... Initializing the FCCNR_MAR and FCCNR_CON
  		FCCNR_CON = 0.0
  		FCCNR_MAR = 0.0
@@ -8290,6 +8321,11 @@ enddo
  	   real(kind=r8size),PARAMETER :: g_lim = 1.0D-19*1.0D3,AA1_MY = 2.53E12,  &
                                     BB1_MY = 5.42E3, AA2_MY = 3.41E13 ,BB2_MY = 6.13E3
 
+     ! TU: namelist variables
+     integer :: sbm_ibreakup, sbm_hail_opt
+     call nl_get_sbm_ibreakup(1, sbm_ibreakup)
+     call nl_get_sbm_hail_opt(1, sbm_hail_opt)
+
     icol_drop_brk=0
     icol_drop=0
     icol_snow=0
@@ -8319,7 +8355,7 @@ enddo
       g2_2(KR)=g2(KR,2)
       g2_3(KR)=g2(KR,3)
       if(kr .gt. KRMIN_BREAKUP .and. g1(kr) > g_lim) icol_drop_brk = 1
-      IF (IBREAKUP.NE.1) icol_drop_brk = 0
+      IF (sbm_ibreakup.NE.1) icol_drop_brk = 0
       if(g1(kr).gt.g_lim) icol_drop=1
       if(g2_1(kr).gt.g_lim) icol_column = 1
       if(g2_2(kr).gt.g_lim) icol_plate = 1
@@ -8434,7 +8470,7 @@ end if
  				rf1 = 1.0
  				rf5 = 0.0
  				rf4 = 0.0
- 				if(hail_opt == 1)then
+ 				if(sbm_hail_opt == 1)then
  					call coll_xyz_lwf(g1,g3,g5,rf1,rf3,rf5,cwls,xl_mg,xs_mg, &
              	         	   	      	 chucm,ima,prdkrn1,nkr,0)
  				else
@@ -8448,7 +8484,7 @@ end if
     			call coll_xyx_lwf(g3,g1,rf3,rf1,cwsl,xs_mg,xl_mg, &
          	         		      chucm,ima,prdkrn1,nkr,1,dm_rime)
 		    else
- 					if(hail_opt == 1)then
+ 					if(sbm_hail_opt == 1)then
  						call coll_xyz_lwf(g3,g1,g5,rf3,rf1,rf5,cwsl,xs_mg,xl_mg, &
 									           chucm,ima,prdkrn1,nkr,1)
  					else
@@ -8599,7 +8635,7 @@ end if
           if((FF3R(kr) .ne. FF3R(kr)) .or. FF3R(kr) < 0.0)then
            call wrf_error_fatal("stop at end coal_bott - FF3R NaN or FF3R < 0.0, model stop")
           endif
- 		   if(hail_opt == 0)then
+ 		   if(sbm_hail_opt == 0)then
  		 	   FF4R(KR)=G4(KR)/(3.*xg(kr)*xg(kr)*1.e3)
       	 if((FF4R(kr) .ne. FF4R(kr)) .or. FF4R(kr) < 0.0) then
           call wrf_error_fatal("stop at end coal_bott - FF4R NaN or FF4R < 0.0, model stop")

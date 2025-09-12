@@ -1,5 +1,6 @@
 
 rconfig   integer sbm_diagnostics          namelist,physics         max_domains    0       rh    "sbm_opt"            "SBM diagnostic opeion, 1: on"
+rconfig   logical sbm_ipolar_hucm          namelist,physics         1            .false.   rh    "IPolar_HUCM flag in Fast-SBM"         ""
 
 
 # sbm radar variables

@@ -10,3 +10,7 @@ masses.asc
 namelist.input.*
 scattering_tables_2layer_high_quad_1dT_1%fw_110
 termvels.asc
+README.namelist
+input_sounding.original
+test*
+u23_*
