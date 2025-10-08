@@ -3028,16 +3028,16 @@ end module module_mp_SBM_Auxiliary
 			                  COL_r, 							               &
 			                  SUP2_OLD_r, DSUPICE_XYZ_r, 		     &
 			                  RCCN_r, DROPRADII_r, NKR, NKR_aerosol, ICEMAX, sbm_iceprocs, &
-			                  Win_r, Is_This_CloudBase, RO_SOLUTE, IONS, MWAERO, &
+			                  Win_r, Is_This_CloudBase, sbm_ro_solute, sbm_ions, sbm_mwaero, &
 			                  Iin, Jin, Kin)
 
 
 	implicit none
 
- 	integer,intent(in) :: 	 Kin, Jin, Iin, NKR, NKR_aerosol, ICEMAX, sbm_iceprocs, Is_This_CloudBase,IONS
+ 	integer,intent(in) :: 	 Kin, Jin, Iin, NKR, NKR_aerosol, ICEMAX, sbm_iceprocs, Is_This_CloudBase, sbm_ions
  	real(kind=r4size),intent(in) :: XL_r(:), XI_r(:,:), ROR_r, PP_r, COL_r, Win_r, &
 							             SUP2_OLD_r, DSUPICE_XYZ_r, RCCN_r(:), DROPRADII_r(:)
-  real(kind=r4size),intent(in) ::	 	   MWAERO, RO_SOLUTE
+  real(kind=r4size),intent(in) ::	 	   sbm_mwaero, sbm_ro_solute
  	real(kind=r4size),intent(inout) :: 	 PSI1_r(:),PSI2_r(:,:),FCCNR_r(:)
  	real(kind=r8size),intent(inout) :: TT, QQ, SUP1,SUP2
 
@@ -3082,7 +3082,7 @@ end module module_mp_SBM_Auxiliary
 		if(sum(FCCNR) > 0.0)then
 			DROPCONCN = 0.0D0
 			CALL WATER_NUCLEATION (COL, NKR_aerosol, PSI1, FCCNR, xl, TT, QQ, ROR, SUP1, DROPCONCN, &
-							 	   PP, Is_This_CloudBase, Win, RO_SOLUTE, RCCN, IONS,MWAERO)
+							 	   PP, Is_This_CloudBase, Win, sbm_ro_solute, RCCN, sbm_ions, sbm_mwaero)
 		endif
 		! ... Transfer drops to Ice-Crystals via direct homogenous nucleation
 		IF(TPC <= -38.0D0) THEN
@@ -3179,8 +3179,8 @@ end module module_mp_SBM_Auxiliary
  END SUBROUTINE JERNUCL01_KS
 ! +-------------------------------------------------------------------------------------------------------------------------+
  SUBROUTINE WATER_NUCLEATION (COL, NKR, PSI1, FCCNR, xl, TT, QQ, ROR, SUP1,     &
-                              DROPCONCN, PP, Is_This_CloudBase, Win, RO_SOLUTE, &
-                              RCCN, IONS, MWAERO)
+                              DROPCONCN, PP, Is_This_CloudBase, Win, sbm_ro_solute, &
+                              RCCN, sbm_ions, sbm_mwaero)
 
 !===================================================================!
 !                                                                   !
@@ -3195,10 +3195,10 @@ end module module_mp_SBM_Auxiliary
 ! FCCNR(KR), 1/cm^3 - aerosol(CCN) non conservative, size distribution function
 ! xl((KR), g        - drop bin masses
 
-  integer,intent(in) :: 			Is_This_CloudBase, NKR, IONS
+  integer,intent(in) :: 			Is_This_CloudBase, NKR, sbm_ions
   real(kind=r8size),intent(in) :: 	xl(:), ROR, PP, Win, RCCN(:), COL
   real(kind=r8size),intent(inout) :: FCCNR(:), PSI1(:), DROPCONCN(:), QQ, TT, SUP1
-  real(kind=r4size),intent(in) :: 	 RO_SOLUTE, MWAERO
+  real(kind=r4size),intent(in) :: 	 sbm_ro_solute, sbm_mwaero
 
   ! ... Locals
     integer :: 			IMAX, I, NCRITI, KR
@@ -3214,8 +3214,6 @@ end module module_mp_SBM_Auxiliary
 
 	DEG01 = 1.0D0/3.0D0
 	RORI=1.0/ROR
-
-	!RO_SOLUTE=2.16D0
 
 	! imax - right CCN spectrum boundary
 	IMAX = NKR
@@ -3235,12 +3233,12 @@ end module module_mp_SBM_Auxiliary
 	! akoe & bkoe - constants in Koehler equation
 		    AKOE=3.3D-05/TT
         !BKOE=2.0D0*4.3D0/(22.9D0+35.5D0)
-	      BKOE = ions*4.3/mwaero
-        BKOE=BKOE*(4.0D0/3.0D0)*3.141593D0*RO_SOLUTE
+	      BKOE = sbm_ions*4.3/sbm_mwaero
+        BKOE=BKOE*(4.0D0/3.0D0)*3.141593D0*sbm_ro_solute
 
         if(Use_cloud_base_nuc == 1) then
 	        if(Is_This_CloudBase == 1) then
-	            CALL Cloud_Base_Super (FCCNR, RCCN, TT, PP, Win, NKR, RCRITI, RO_SOLUTE, IONS, MWAERO, COL)
+	            CALL Cloud_Base_Super (FCCNR, RCCN, TT, PP, Win, NKR, RCRITI, sbm_ro_solute, sbm_ions, sbm_mwaero, COL)
           else
  	            ! rcriti, cm - critical radius of "dry" aerosol
 	            RCRITI = (AKOE/3.0D0)*(4.0D0/BKOE/SUP1/SUP1)**DEG01
@@ -3463,7 +3461,7 @@ end module module_mp_SBM_Auxiliary
 
 ! SUBROUTINE ICE_NUCL
 ! +-------------------------------------------------------------------------------------------------+
-	SUBROUTINE Cloud_Base_Super (FCCNR, RCCN, TT, PP, Wbase, NKR, RCRITI, RO_SOLUTE, IONS, MWAERO, &
+	SUBROUTINE Cloud_Base_Super (FCCNR, RCCN, TT, PP, Wbase, NKR, RCRITI, sbm_ro_solute, sbm_ions, sbm_mwaero, &
 								              COL)
 
 	implicit none
@@ -3473,10 +3471,10 @@ end module module_mp_SBM_Auxiliary
 ! FCCNR(KR), 1/cm^3 - aerosol(CCN) non conservative, size
 !                     distribution function in point with X,Z
 !                     coordinates, KR=1,...,NKR
-	integer,intent(in) :: 				   NKR, IONS
+	integer,intent(in) :: 				   NKR, sbm_ions
 	real(kind=r8size),intent(in) ::  TT, PP, Wbase, RCCN(:), COL
 	real(kind=r8size),intent(inout) :: 	FCCNR(:), RCRITI
-	real(kind=r4size),intent(in) ::  MWAERO, RO_SOLUTE
+	real(kind=r4size),intent(in) ::  sbm_mwaero, sbm_ro_solute
 
 	! ... Locals
 	  integer :: NR, NN, KR
@@ -3484,7 +3482,7 @@ end module module_mp_SBM_Auxiliary
 	  					            TPC
 	! ... Locals
 
-	CALL supmax_COEFF(AKOE,BKOE,C3,PP,TT,RO_SOLUTE,IONS,MWAERO)
+	CALL supmax_COEFF(AKOE,BKOE,C3,PP,TT,sbm_ro_solute,sbm_ions,sbm_mwaero)
 
 ! supmax calculation
 
@@ -3556,7 +3554,7 @@ end module module_mp_SBM_Auxiliary
 	RETURN
 	END SUBROUTINE Cloud_Base_Super
 ! +-------------------------------------------------------------------+
- 	SUBROUTINE supmax_COEFF (AKOE,BKOE,C3,PP,TT,RO_SOLUTE,IONS,MWAERO)
+ 	SUBROUTINE supmax_COEFF (AKOE,BKOE,C3,PP,TT,sbm_ro_solute,sbm_ions,sbm_mwaero)
 
 		implicit none
 
@@ -3567,10 +3565,10 @@ end module module_mp_SBM_Auxiliary
 ! PP, (DYNES/CM/CM)- PRESSURE
 ! TT, (K)- temperature
 
-  integer,intent(in) :: IONS
+  integer,intent(in) :: sbm_ions
 	real(kind=r8size) ,intent(in) :: 	PP, TT
 	real(kind=r8size) ,intent(out) :: AKOE, BKOE, C3
-	real,intent(in) :: 				MWAERO, RO_SOLUTE
+	real,intent(in) :: sbm_mwaero, sbm_ro_solute
 
 	! ... Local
 		real(kind=r8size) ,parameter :: RV_MY = 461.5D4, CP = 1005.0D4, G = 9.8D2, RD_MY = 287.0D4, & ![cgs]
@@ -3664,11 +3662,10 @@ end module module_mp_SBM_Auxiliary
 
 ! akoe & bkoe - constants in Koehler equation
 
-	!RO_SOLUTE=2.16D0
 	AKOE=2.0D0*Sw/(RV_MY*RO_W*(tpc+TZERO))
 	!BKOE=2.0D0*4.3D0/(22.9D0+35.5D0)
-	BKOE = ions*4.3/mwaero
-	BKOE=BKOE*(4.0D0/3.0D0)*pi*RO_SOLUTE
+	BKOE = sbm_ions*4.3/sbm_mwaero
+	BKOE=BKOE*(4.0D0/3.0D0)*pi*sbm_ro_solute
 
 ! RO_V, g/cm^3 - density of water vapor
 !                calculate from equation of state for water vapor
@@ -3719,12 +3716,12 @@ end module module_mp_SBM_Auxiliary
 	RETURN
 	END SUBROUTINE SupMax_COEFF
 ! +----------------------------------------------------------------------------------------------------+
-	SUBROUTINE LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_local,COL,XL,XCCN,RCCN,RO_SOLUTE,Scale_Fa,IType)
+	SUBROUTINE LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_local,COL,XL,XCCN,RCCN,sbm_ro_solute,Scale_Fa,IType)
 
 	implicit none
 ! ... Interface
 		integer,intent(in) :: NKR_local, Itype
-		real(kind=r4size) ,intent(in) :: XL(:), COL, RO_SOLUTE, Scale_Fa
+		real(kind=r4size) ,intent(in) :: XL(:), COL, sbm_ro_solute, Scale_Fa
 		real(kind=r8size) ,intent(out) :: FCCNR_CON(:), FCCNR_MAR(:)
 		real(kind=r4size) ,intent(out) :: XCCN(:),RCCN(:)
 ! ... Interface
@@ -3736,7 +3733,7 @@ end module module_mp_SBM_Auxiliary
 							            ccncon(modemax), sig(modemax), radius_mean(modemax)
 		real(kind=r8size)  :: CONCCCNIN, FCCNR_tmp(NKR_local), DEG01, X0DROP, &
 						              XOCCN, X0, R0, RCCN_MICRON, S_KR, S(NKR_local), X0CCN, ROCCN(NKR_local), &
-	                        RO_SOLUTE_Ammon, RO_SOLUTE_NaCl,arg11,arg12,arg13,arg21,arg22,arg23, & 
+	                        arg11,arg12,arg13,arg21,arg22,arg23, & 
                           arg31,arg32,arg33,dNbydlogR_norm1,dNbydlogR_norm2,dNbydlogR_norm3
 
 
@@ -3748,13 +3745,11 @@ end module module_mp_SBM_Auxiliary
 ! ... Local
 
 	! ... Calculating the CCN radius grid
-	!RO_SOLUTE_NaCl = 2.16D0  ! [g/cm3]
-	!RO_SOLUTE_Ammon = 1.79	 ! [g/cm3]
 	DEG01 = 1.0D0/3.0D0
 	X0DROP = XL(2)
 	X0CCN = X0DROP/(2.0**(NKR_local))
 	DO KR = NKR_local,1,-1
-	   ROCCN(KR) = RO_SOLUTE
+	   ROCCN(KR) = sbm_ro_solute
 	   X0 = X0CCN*2.0D0**(KR)
 	   R0 = (3.0D0*X0/4.0D0/3.141593D0/ROCCN(KR))**DEG01
 	   XCCN(KR) = X0
@@ -3968,11 +3963,11 @@ enddo
  ! ### (KS) - CCN related
  ! -----------------------------------------------------------------------
  !REAL (KIND=R4SIZE), parameter :: mwaero = 22.9 + 35.5 ! sea salt
- real(kind=r4size),parameter :: mwaero = 115.0
+ !real(kind=r4size),parameter :: mwaero = 115.0
  !integer,parameter :: ions = 2        	! sea salt
- integer,parameter  :: ions = 3         ! ammonium-sulfate
+ !integer,parameter  :: ions = 3         ! ammonium-sulfate
  !real(KIND=R4SIZE),parameter :: RO_SOLUTE = 2.16   	! sea salt
- real(kind=r4size),parameter ::  RO_SOLUTE = 1.79  	! ammonium-sulfate
+ !real(kind=r4size),parameter ::  RO_SOLUTE = 1.79  	! ammonium-sulfate
  ! ----------------------------------------------------------------------
  REAL (KIND=R4SIZE) :: FR_LIM(NKR), FRH_LIM(NKR)
 
@@ -4177,6 +4172,9 @@ enddo
   ! TU: namelist variables
   character(len=80) :: wrf_err_message
   integer :: sbm_ilognormal_modes_aerosol
+  real :: sbm_mwaero
+  integer :: sbm_ions
+  real :: sbm_ro_solute
   integer :: sbm_spont_rain_breakup
   integer :: sbm_iceprocs
   integer :: sbm_snow_breakup
@@ -4184,6 +4182,9 @@ enddo
   logical :: sbm_conserv
   logical :: sbm_ipolar_hucm
   call nl_get_sbm_ilognormal_modes_aerosol(1, sbm_ilognormal_modes_aerosol)
+  call nl_get_sbm_mwaero(1, sbm_mwaero)
+  call nl_get_sbm_ions(1, sbm_ions)
+  call nl_get_sbm_ro_solute(1, sbm_ro_solute)
   call nl_get_sbm_spont_rain_breakup(1, sbm_spont_rain_breakup)
   call nl_get_sbm_iceprocs(1, sbm_iceprocs)
   call nl_get_sbm_snow_breakup(1, sbm_snow_breakup)
@@ -4192,6 +4193,12 @@ enddo
   call nl_get_sbm_ipolar_hucm(1, sbm_ipolar_hucm)
   if (itimestep.eq.1) then
     write(wrf_err_message, *) '!I: sbm_ilognormal_modes_aerosol = ', sbm_ilognormal_modes_aerosol
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_mwaero = ', sbm_mwaero
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_ions = ', sbm_ions
+    call wrf_message(trim(wrf_err_message))
+    write(wrf_err_message, *) '!I: sbm_ro_solute = ', sbm_ro_solute
     call wrf_message(trim(wrf_err_message))
     write(wrf_err_message, *) '!I: sbm_spont_rain_breakup = ', sbm_spont_rain_breakup
     call wrf_message(trim(wrf_err_message))
@@ -4673,7 +4680,7 @@ enddo
                                             ,COL 								            &
                                             ,SUP2_OLD,DSUPICE_XYZ(I,K,J) 		&
                                             ,RCCN,DROPRADII,NKR,NKR_aerosol,ICEMAX,sbm_iceprocs &
-                                            ,W_Stag_My,Is_This_CloudBase,RO_SOLUTE,IONS,MWAERO &
+                                            ,W_Stag_My,Is_This_CloudBase,sbm_ro_solute,sbm_ions,sbm_mwaero &
                                             ,I,J,K)
                         
                         
@@ -5416,7 +5423,9 @@ enddo
 
     ! TU: namelist variables
     integer :: sbm_ilognormal_modes_aerosol
+    real :: sbm_ro_solute
     call nl_get_sbm_ilognormal_modes_aerosol(1, sbm_ilognormal_modes_aerosol)
+    call nl_get_sbm_ro_solute(1, sbm_ro_solute)
 
  	 if(nkr == 33) input_dir = trim(dir_33)
  	 if(nkr == 43) input_dir = trim(dir_43)
@@ -6134,8 +6143,8 @@ enddo
  		Scale_CCN_Factor = 1.0
  		XCCN = 0.0
  		RCCN = 0.0
- 		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,RO_SOLUTE,Scale_CCN_Factor,1)
- 		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,RO_SOLUTE,Scale_CCN_Factor,2)
+ 		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,sbm_ro_solute,Scale_CCN_Factor,1)
+ 		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,sbm_ro_solute,Scale_CCN_Factor,2)
  		WRITE(errmess, '(A,I2)') 'module_mp_WRFsbm : succesfull reading "LogNormal_modes_Aerosol" '
  		CALL wrf_debug(000, errmess)
  	ENDIF

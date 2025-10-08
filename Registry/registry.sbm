@@ -320,6 +320,9 @@ package   full_khain_lynn           mp_physics==32               -      moist:qv
 
 # SBM namelist options
 rconfig   integer     sbm_ilognormal_modes_aerosol namelist,physics      1            1        rh      "ILogNormal_modes_Aerosol flag in Fast-SBM"  ""
+rconfig   real        sbm_mwaero          namelist,physics               1            115.0    rh      "mwaero flag in Fast-SBM: 22.9+35.5 for sea salt and 115.0 for ammonium-sulfate" ""
+rconfig   integer     sbm_ions            namelist,physics               1            3        rh      "ions flag in Fast-SBM: 2 for sea salt and 3 for ammonium-sulfate" ""
+rconfig   real        sbm_ro_solute       namelist,physics               1            1.79     rh      "RO_SOLUTE flag in Fast-SBM: 2.16 for sea salt and 1.79 for ammonium-sulfate" ""
 rconfig   integer     sbm_ibreakup        namelist,physics               1            1        rh      "IBREAKUP flag in Fast-SBM"                  ""
 rconfig   integer     sbm_i_break_method  namelist,physics               1            1        rh      "I_Break_Method flag in Fast-SBM"            ""
 rconfig   integer     sbm_spont_rain_breakup namelist,physics            1            1        rh      "Spont_Rain_Breakup_On flag in Fast-SBM"     ""
