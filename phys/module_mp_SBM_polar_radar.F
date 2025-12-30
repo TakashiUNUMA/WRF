@@ -179,12 +179,12 @@ real,dimension(nbins) :: m    ! >> (KS)
 do iiwl=1,nwavelengths
   write(wlstr,'(I3.3)') int(WAVELENGTHS(iiwl)*10.0d0)
   scattering_dir(iiwl)=TRIM(scattering_dir_prefix)//'_'//wlstr//'/'
-  WRITE(*,*) 'scattering input directory is source/',TRIM(scattering_dir(iiwl))
+  WRITE(*,*) '  scattering input directory is ',TRIM(scattering_dir(iiwl))
 enddo
 
 DO ispecies=1,size(usetables)
   if((ispecies==1) .AND. (usetables(ispecies)==1) ) then ! rain
-      WRITE(*,*) 'READING SCATTERING TABLES: RAIN'
+      WRITE(*,*) '  READING SCATTERING TABLES: RAIN'
       ALLOCATE(faf1(nbins,nfws(1),ntemps(1),nwavelengths),stat=istatus)
       ALLOCATE(fbf1(nbins,nfws(1),ntemps(1),nwavelengths),stat=istatus)
       ALLOCATE(fab1(nbins,nfws(1),ntemps(1),nwavelengths),stat=istatus)
@@ -214,7 +214,7 @@ DO ispecies=1,size(usetables)
         enddo
       enddo
   elseif(ispecies==2 .AND. usetables(ispecies)==1) then ! fd
-      WRITE(*,*) 'READING SCATTERING TABLES: FD'
+      WRITE(*,*) '  READING SCATTERING TABLES: FD'
       ALLOCATE(faf1fd(nbins,nfws(2),ntemps(2),nwavelengths),stat=istatus)
       ALLOCATE(fbf1fd(nbins,nfws(2),ntemps(2),nwavelengths),stat=istatus)
       ALLOCATE(fab1fd(nbins,nfws(2),ntemps(2),nwavelengths),stat=istatus)
@@ -246,7 +246,7 @@ DO ispecies=1,size(usetables)
        enddo
       enddo
   elseif(ispecies==3 .AND. usetables(ispecies)==1) then ! ice crystals (plates, dendrites, columns)
-      WRITE(*,*) 'READING SCATTERING TABLES: ICE CRYSTALS'
+      WRITE(*,*) '  READING SCATTERING TABLES: ICE CRYSTALS'
       ALLOCATE(faf2d(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
       ALLOCATE(fbf2d(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
       ALLOCATE(fab2d(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
@@ -331,7 +331,7 @@ DO ispecies=1,size(usetables)
        enddo
       enddo
   elseif(ispecies==4 .AND. usetables(ispecies)==1) then ! snow (aggregates)
-      WRITE(*,*) 'READING SCATTERING TABLES: SNOW'
+      WRITE(*,*) '  READING SCATTERING TABLES: SNOW'
       ALLOCATE(faf3(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
       ALLOCATE(fbf3(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
       ALLOCATE(fab3(nbins,nfws(3),ntemps(3),nwavelengths),stat=istatus)
@@ -363,7 +363,7 @@ DO ispecies=1,size(usetables)
        enddo
       enddo
   elseif(ispecies==5 .AND. usetables(ispecies)==1) then ! graupel
-      WRITE(*,*) 'READING SCATTERING TABLES: GRAUPEL'
+      WRITE(*,*) '  READING SCATTERING TABLES: GRAUPEL'
       ALLOCATE(faf4(nbins,nfws(4),ntemps(4),nwavelengths),stat=istatus)
       ALLOCATE(fbf4(nbins,nfws(4),ntemps(4),nwavelengths),stat=istatus)
       ALLOCATE(fab4(nbins,nfws(4),ntemps(4),nwavelengths),stat=istatus)
@@ -395,7 +395,7 @@ DO ispecies=1,size(usetables)
        enddo
       enddo
   elseif(ispecies==6 .AND. usetables(ispecies)==1) then ! hail
-      WRITE(*,*) 'READING SCATTERING TABLES: HAIL'
+      WRITE(*,*) '  READING SCATTERING TABLES: HAIL'
       ALLOCATE(faf5(nbins,nfws(5),ntemps(5),nwavelengths),stat=istatus)
       ALLOCATE(fbf5(nbins,nfws(5),ntemps(5),nwavelengths),stat=istatus)
       ALLOCATE(fab5(nbins,nfws(5),ntemps(5),nwavelengths),stat=istatus)

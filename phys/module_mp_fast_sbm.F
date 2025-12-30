@@ -122,7 +122,7 @@ contains
   ! TU: namelist variables
   integer :: sbm_i_break_method
   call nl_get_sbm_i_break_method(1, sbm_i_break_method)
-  write(wrf_err_message, *) '!I: sbm_i_break_method = ', sbm_i_break_method
+  write(wrf_err_message, *) '  i_break_method = ', sbm_i_break_method
   call wrf_message(trim(wrf_err_message))
 
 DROPRADII_dp = DROPRADII
@@ -135,7 +135,7 @@ DO KR=1,NKR
 	IF (DROPRADII(kr)>=0.3) exit
 END DO
 
-WRITE( wrf_err_message , * ) 'IKR_Spon_Break=',ikr_spon_break
+WRITE( wrf_err_message , * ) '  IKR_Spon_Break=',ikr_spon_break
 CALL wrf_message ( TRIM ( wrf_err_message ) )
 
 if (sbm_i_break_method==1) then
@@ -3812,7 +3812,7 @@ end module module_mp_SBM_Auxiliary
 enddo
   
   CONCCCNIN = col*sum(FCCNR_tmp(:))
-  print*,'CONCCCNIN',CONCCCNIN
+  print*,'  IType,CONCCCNIN',IType,CONCCCNIN
   if(IType == 1) FCCNR_MAR = Scale_Fa*FCCNR_tmp
   if(IType == 2) FCCNR_CON = Scale_Fa*FCCNR_tmp
 
@@ -3852,10 +3852,12 @@ enddo
  INTEGER, PARAMETER, PRIVATE:: R4SIZE = 4
 
  ! JacobS: Hard coding the bin-wise indices for the NMM core
+ ! TU: 33 bin
 ! INTEGER, PRIVATE,PARAMETER ::  p_ff1i01=2, p_ff1i33=34,p_ff5i01=35,p_ff5i33=67,p_ff6i01=68,&
 !                                p_ff6i33=100,p_ff8i01=101,p_ff8i43=143
+ ! TU: 43 bin
  INTEGER, PRIVATE,PARAMETER ::  p_ff1i01=2, p_ff1i33=44,p_ff5i01=45,p_ff5i33=87,p_ff6i01=88,&
-                                p_ff6i33=130,p_ff8i01=131,p_ff8i43=183
+                                p_ff6i33=130,p_ff8i01=131,p_ff8i43=173
 
  ! JacobS: Hard coding for the polarimetric operator output array 
   INTEGER, PRIVATE,PARAMETER :: r_p_ff1i01=2, r_p_ff1i06=07,r_p_ff2i01=08,r_p_ff2i06=13,r_p_ff3i01=14,&
@@ -5521,8 +5523,8 @@ enddo
  IF ( wrf_dm_on_monitor() ) THEN
  	WRITE(errmess, '(A,I2)') 'module_mp_FAST-SBM : Table-2 -- opening capacity.asc on unit',hujisbm_unit1
  	CALL wrf_debug(150, errmess)
- 	!OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/capacity33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/capacity43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/capacity33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/capacity43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	900	FORMAT(6E13.5)
  	READ(hujisbm_unit1,900) RLEC,RIEC,RSEC,RGEC,RHEC
  END IF
@@ -5570,8 +5572,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_FAST_SBM : Table-3 -- opening masses.asc on unit ',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/masses33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
-         OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/masses43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/masses33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/masses43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,900) XL,XI,XS,XG,XH
          CLOSE(hujisbm_unit1)
      ENDIF
@@ -5620,8 +5622,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_FAST_SBM : Table-4 -- opening termvels.asc on unit ',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/termvels33_corrected.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
-         OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/termvels43_corrected.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/termvels33_corrected.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/termvels43_corrected.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,900) VR1,VR2,VR3,VR4,VR5
         CLOSE(hujisbm_unit1)
      ENDIF
@@ -5670,8 +5672,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_FAST_SBM : Table-5 -- opening constants.asc on unit  ',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/constants33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
-         OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/constants43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/constants33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/constants43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,900) SLIC,TLIC,COEFIN
       CLOSE(hujisbm_unit1)
      END IF
@@ -5715,8 +5717,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_FAST_SBM : Table-6 -- opening kernels_z.asc on unit  ',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !Fname = trim(input_dir)//'/kernLL_z33.asc'
-         Fname = trim(input_dir)//'/kernLL_z43.asc'
+         if(nkr == 33) Fname = trim(input_dir)//'/kernLL_z33.asc'
+         if(nkr == 43) Fname = trim(input_dir)//'/kernLL_z43.asc'
          OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,900) YWLL_1000MB,YWLL_750MB,YWLL_500MB
          CLOSE(hujisbm_unit1)
@@ -5811,6 +5813,7 @@ enddo
  	CALL wrf_debug(150, errmess)
 
  	! ... Drop - IC
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/ckli_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLI_300MB
@@ -5823,13 +5826,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLI_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/ckli_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWLI_300MB,YWLI_500MB,YWLI_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/ckli_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWLI_300MB,YWLI_500MB,YWLI_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... Drop - Graupel
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/cklg_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLG_300MB
@@ -5842,13 +5848,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLG_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/cklg_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWLG_300MB,YWLG_500MB,YWLG_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/cklg_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWLG_300MB,YWLG_500MB,YWLG_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... Drop - Hail
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/cklh_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLH_300MB
@@ -5861,13 +5870,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLH_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/cklh_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWLH_300MB,YWLH_500MB,YWLH_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/cklh_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWLH_300MB,YWLH_500MB,YWLH_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... Drop - Snow
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/ckls_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLS_300MB
@@ -5880,13 +5892,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWLS_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/ckls_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWLS_300MB,YWLS_500MB,YWLS_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/ckls_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWLS_300MB,YWLS_500MB,YWLS_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... IC - IC
+  if (nkr == 43) then
   Fname = trim(input_dir)//'/ckii_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWII_300MB
@@ -5899,13 +5914,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWII_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/ckii_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWII_300MB,YWII_500MB,YWII_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/ckii_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWII_300MB,YWII_500MB,YWII_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... IC - SNow
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/ckis_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWIS_300MB
@@ -5918,13 +5936,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWIS_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/ckis_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWIS_300MB,YWIS_500MB,YWIS_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/ckis_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWIS_300MB,YWIS_500MB,YWIS_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... Snow - Graupel
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/cksg_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWSG_300MB
@@ -5937,13 +5958,16 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWSG_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/cksg_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWSG_300MB,YWSG_500MB,YWSG_750MB
- 	!CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/cksg_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWSG_300MB,YWSG_500MB,YWSG_750MB
+ 	CLOSE(hujisbm_unit1)
+  end if
 
  	! ... Snow - Snow
+  if (nkr == 43) then
  	Fname = trim(input_dir)//'/ckss_300mb_As'
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWSS_300MB
@@ -5956,11 +5980,13 @@ enddo
  	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
  	READ(hujisbm_unit1,900) YWSS_750MB
  	CLOSE(hujisbm_unit1)
-
- 	!Fname = trim(input_dir)//'/ckss_33_300mb_500mb_750mb.asc'
- 	!OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
- 	!READ(hujisbm_unit1,900) YWSS_300MB,YWSS_500MB,YWSS_750MB
-  !CLOSE(hujisbm_unit1)
+  end if
+  if (nkr == 33) then
+ 	Fname = trim(input_dir)//'/ckss_33_300mb_500mb_750mb.asc'
+ 	OPEN(UNIT=hujisbm_unit1,FILE=Fname,FORM="FORMATTED",STATUS="OLD",ERR=2070)
+ 	READ(hujisbm_unit1,900) YWSS_300MB,YWSS_500MB,YWSS_750MB
+  CLOSE(hujisbm_unit1)
+  end if
  END IF
 
 #if (defined(DM_PARALLEL))
@@ -6033,8 +6059,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_WRFsbm : Table-8 -- opening bulkdens.asc on unit ',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkdens33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
-         OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkdens43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkdens33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkdens43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,900) RO1BL,RO2BL,RO3BL,RO4BL,RO5BL
          CLOSE(hujisbm_unit1)
      END IF
@@ -6075,8 +6101,8 @@ enddo
      IF ( wrf_dm_on_monitor() ) THEN
          WRITE(errmess, '(A,I2)') 'module_mp_FAST_SBM : Table-9 -- opening bulkradii.asc on unit',hujisbm_unit1
          CALL wrf_debug(150, errmess)
-         !OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkradii33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
-         OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkradii43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 33) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkradii33.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
+         if(nkr == 43) OPEN(UNIT=hujisbm_unit1,FILE=trim(input_dir)//"/bulkradii43.asc",FORM="FORMATTED",STATUS="OLD",ERR=2070)
          READ(hujisbm_unit1,*) RADXXO
          CLOSE(hujisbm_unit1)
      END IF
@@ -6117,7 +6143,7 @@ enddo
  ! ### (KS) - Broadcating Usetables array
  	  CALL wrf_dm_bcast_integer ( usetables , size ( usetables ) * IWORDSIZE )
 #endif
-  WRITE(errmess, '(A,I2)') 'module_mp_WRFsbm : succesfull reading Table-10'
+  WRITE(errmess, '(A,I2)') '  FAST_SBM_INIT : succesfull reading Table-10'
   call wrf_message(errmess)
  ! +-----------------------------------------------------------------------+
 
@@ -6169,7 +6195,7 @@ enddo
  		RCCN = 0.0
  		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,sbm_ro_solute,Scale_CCN_Factor,1)
  		CALL LogNormal_modes_Aerosol(FCCNR_CON,FCCNR_MAR,NKR_aerosol,COL,XL,XCCN,RCCN,sbm_ro_solute,Scale_CCN_Factor,2)
- 		WRITE(errmess, '(A,I2)') 'module_mp_WRFsbm : succesfull reading "LogNormal_modes_Aerosol" '
+ 		WRITE(errmess, '(A,I2)') 'FAST_SBM_INIT : succesfull reading "LogNormal_modes_Aerosol" '
  		CALL wrf_debug(000, errmess)
  	ENDIF
  ! +-------------------------------------------------------------+
@@ -6187,7 +6213,7 @@ enddo
  	 	DM_BCAST_MACRO_R4(PKIJ)
     DM_BCAST_MACRO_R4(QKJ)
 #endif
- 	  WRITE(errmess, '(A,I2)') 'FAST_SBM_INIT : succesfull reading BREAKINIT_KS" '
+ 	  WRITE(errmess, '(A,I2)') 'FAST_SBM_INIT : succesfull reading "BREAKINIT_KS" '
     CALL wrf_debug(000, errmess)
   ! +--------------------------------------------------------------------------------------------------------------------+
 
