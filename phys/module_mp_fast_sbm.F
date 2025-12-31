@@ -5427,8 +5427,10 @@ enddo
     ! TU: namelist variables
     integer :: sbm_ilognormal_modes_aerosol
     real :: sbm_ro_solute
+    logical :: sbm_ipolar_hucm
     call nl_get_sbm_ilognormal_modes_aerosol(1, sbm_ilognormal_modes_aerosol)
     call nl_get_sbm_ro_solute(1, sbm_ro_solute)
+    call nl_get_sbm_ipolar_hucm(1, sbm_ipolar_hucm)
 
  	 if(nkr == 33) input_dir = trim(dir_33)
  	 if(nkr == 43) input_dir = trim(dir_43)
@@ -6117,6 +6119,7 @@ enddo
  ! LookUpTable #10
  ! Polar-HUCM Scattering Amplitudes Look-up table :
  ! +-----------------------------------------------------------------------+
+  if (sbm_ipolar_hucm) then
   CALL LOAD_TABLES(NKR)  ! (KS) - Loading the scattering look-up-table
 
  ! ... (KS) - Broadcating Liquid drops
@@ -6144,6 +6147,9 @@ enddo
  	  CALL wrf_dm_bcast_integer ( usetables , size ( usetables ) * IWORDSIZE )
 #endif
   WRITE(errmess, '(A,I2)') '  FAST_SBM_INIT : succesfull reading Table-10'
+  else
+  WRITE(errmess, '(A,I2)') '  FAST_SBM_INIT :    skip    reading Table-10'
+  end if
   call wrf_message(errmess)
  ! +-----------------------------------------------------------------------+
 
