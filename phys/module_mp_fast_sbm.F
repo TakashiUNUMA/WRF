@@ -3852,13 +3852,15 @@ enddo
  INTEGER, PARAMETER, PRIVATE:: R4SIZE = 4
 
  ! JacobS: Hard coding the bin-wise indices for the NMM core
- ! TU: 33 bin
-! INTEGER, PRIVATE,PARAMETER ::  p_ff1i01=2, p_ff1i33=34,p_ff5i01=35,p_ff5i33=67,p_ff6i01=68,&
-!                                p_ff6i33=100,p_ff8i01=101,p_ff8i43=143
+#if( BUILD_SBM_FAST_43BIN == 1)
  ! TU: 43 bin
  INTEGER, PRIVATE,PARAMETER ::  p_ff1i01=2, p_ff1i33=44,p_ff5i01=45,p_ff5i33=87,p_ff6i01=88,&
                                 p_ff6i33=130,p_ff8i01=131,p_ff8i43=173
-
+#else
+ ! TU: 33 bin
+ INTEGER, PRIVATE,PARAMETER ::  p_ff1i01=2, p_ff1i33=34,p_ff5i01=35,p_ff5i33=67,p_ff6i01=68,&
+                                p_ff6i33=100,p_ff8i01=101,p_ff8i43=143
+#endif
  ! JacobS: Hard coding for the polarimetric operator output array 
   INTEGER, PRIVATE,PARAMETER :: r_p_ff1i01=2, r_p_ff1i06=07,r_p_ff2i01=08,r_p_ff2i06=13,r_p_ff3i01=14,&
                                 r_p_ff3i06=19,r_p_ff4i01=20,r_p_ff4i06=25,r_p_ff5i01=26,r_p_ff5i06=31,r_p_ff6i01=32,r_p_ff6i06=37,&
@@ -3877,9 +3879,12 @@ enddo
              					,KRMINL_GL=1,KRMAXL_GL=24                                &
              					,KRMING_GL=1,KRMAXG_GL=33                                &
              					,KRDROP=15,KRBREAK=17,KRICE=18                           & ! KRDROP=Bin 15 --> 50um
-                      ,NKR=43,JMAX=43,NRG=2,JBREAK=28,BR_MAX=43,KRMIN_BREAKUP=31,NKR_aerosol=43   ! 43 bins
-                     !,NKR=33,JMAX=33,NRG=2,JBREAK=18,BR_MAX=33,KRMIN_BREAKUP=31,NKR_aerosol=43   ! 33 bins
-
+                      ,NRG=2,KRMIN_BREAKUP=31,NKR_aerosol=43
+#if( BUILD_SBM_FAST_43BIN == 1)
+ INTEGER,PARAMETER :: NKR=43,JMAX=43,JBREAK=28,BR_MAX=43   ! 43 bins
+#else
+ INTEGER,PARAMETER :: NKR=33,JMAX=33,JBREAK=18,BR_MAX=33   ! 33 bins
+#endif
  REAL(kind=r4size) :: dt_coll
  REAL,PARAMETER :: C1_MEY=0.00033,C2_MEY=0.0,COL=0.23105, &
                    p1=1000000.0,p2=750000.0,p3=500000.0,  &
@@ -4222,6 +4227,8 @@ enddo
   if (itimestep.eq.1)then
     if (sbm_iceprocs.eq.1) call wrf_message(" FAST SBM: ICE PROCESES ACTIVE ")
     if (sbm_iceprocs.eq.0) call wrf_message(" FAST SBM: LIQUID PROCESES ONLY")
+    if (NKR.eq.43) call wrf_message(" FAST SBM: 43 BIN VERSION")
+    if (NKR.eq.33) call wrf_message(" FAST SBM: 33 BIN VERSION")
   end if
 
   NCOND = 3
